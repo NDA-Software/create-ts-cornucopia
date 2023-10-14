@@ -23,7 +23,7 @@ export default [
                 preserveModules: true,
                 interop: 'auto',
                 dir: '.build/',
-                format: 'esm'
+                format: 'cjs'
             }
         ],
         plugins: [
@@ -35,7 +35,7 @@ export default [
             nodeResolve(),
             peerDepsExternal(),
             copy({
-                targets: [{ src: './src/templates/', dest: './.build/' }]
+                targets: [{ src: './package.json', dest: './.build/templates/' }]
             })
         ]
     }
