@@ -1,9 +1,9 @@
 import { existsSync, mkdirSync, writeFileSync } from 'fs'
-import peerDepsExternal from 'rollup-plugin-peer-deps-external';
 
 import nodeResolve from '@rollup/plugin-node-resolve'
+import peerDepsExternal from 'rollup-plugin-peer-deps-external';
 import typescript from 'rollup-plugin-typescript2'
-import copy from 'rollup-plugin-copy'
+import json from "rollup-plugin-json"
 
 if (!existsSync('./.temp/dummy.js')) {
     mkdirSync('./.temp/')
@@ -16,27 +16,19 @@ if (!existsSync('./.temp/dummy.js')) {
 
 export default [
     {
-        input: 'src/index.ts',
-        output: [
-            {
-                exports: 'named',
-                preserveModules: true,
-                interop: 'auto',
-                dir: '.build/',
-                format: 'cjs'
-            }
-        ],
+        input: 'index.ts',
+        output: [{
+            exports: 'named',
+            preserveModules: true,
+            interop: 'auto',
+            dir: 'dist/',
+            format: 'cjs'
+        }],
         plugins: [
-            typescript({
-                tsconfig: 'tsconfig.json',
-                outDir: '.build/',
-                include: ['./src/**/*.ts']
-            }),
+            typescript({ tsconfig: 'tsconfig.json' }),
             nodeResolve(),
             peerDepsExternal(),
-            copy({
-                targets: [{ src: './package.json', dest: './.build/templates/' }]
-            })
+            json(),
         ]
     }
 ]
