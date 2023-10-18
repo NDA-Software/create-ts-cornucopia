@@ -6,8 +6,10 @@ import { stdin as input, stdout as output } from 'node:process';
 import path from 'path';
 
 import packageFile from '../package.json';
+import tsConfigFile from '../tsconfig.json';
 
 const packageJson: any = packageFile;
+const tsCofigJson: any = tsConfigFile;
 
 const validateLicense = require('validate-npm-package-license');
 
@@ -49,7 +51,8 @@ async function confirmAndWriteBellowContent (fileName: string, content: string):
         writeFileSync(fileName, content);
 }
 
-const folderName = path.basename(process.cwd());
+const mainFolder = process.cwd();
+const folderName = path.basename(mainFolder);
 
 async function init (): Promise<void> {
     console.log('Preparing package.json...');
@@ -154,29 +157,26 @@ async function init (): Promise<void> {
     // #endregion
 
     // #region Saving Package.json:
-    const newPackageJsonFile = `${process.cwd()}/package.json`;
+    const newPackageJsonFile = `${mainFolder}/package.json`;
 
     await confirmAndWriteBellowContent(newPackageJsonFile, JSON.stringify(packageJson, null, 4));
     // #endregion
 
     // #region Saving GitIgnore:
-    const newGitIgnoreFile = `${process.cwd()}/.gitignore`;
+    const newGitIgnoreFile = `${mainFolder}/.gitignore`;
 
     await confirmAndWriteBellowContent(newGitIgnoreFile, readTemplate('.gitignore'));
     // #endregion
 
     // #region Saving Github Workers:
     if (await confirm('Is the Repository on Github?')) {
-        const githubFolder = `${process.cwd()}/.github`;
+        const githubFolder = `${mainFolder}/.github`;
 
         if (!existsSync(githubFolder))
             mkdirSync(githubFolder);
 
-        if (funding !== '') {
-            const fundingFile = `${githubFolder}/funding.yml`;
-
-            await confirmAndWriteBellowContent(fundingFile, `custom: ${funding}`);
-        }
+        if (funding !== '')
+            await confirmAndWriteBellowContent(`${githubFolder}/funding.yml`, `custom: ${funding}`);
 
         const workflowFolder = `${githubFolder}/workflows`;
 
@@ -184,6 +184,12 @@ async function init (): Promise<void> {
 
         await confirmAndWriteBellowContent(`${workflowFolder}/deploy.yml`, readTemplate('.github/workflows/deploy.yml'));
     }
+    // #endregion
+
+    // #region Saving TSConfig:
+    tsCofigJson.compilerOptions.declaration = true;
+
+    await confirmAndWriteBellowContent(`${mainFolder}/tsconfig.json`, JSON.stringify(tsCofigJson, null, 4));
     // #endregion
 }
 
