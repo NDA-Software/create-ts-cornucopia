@@ -1,8 +1,9 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-
 import { fileURLToPath } from 'node:url';
 import { createInterface } from 'node:readline/promises';
 import { stdin as input, stdout as output } from 'node:process';
+import { execSync } from 'node:child_process';
+
 import path from 'path';
 
 import packageFile from '../package.json';
@@ -61,6 +62,10 @@ async function init (): Promise<void> {
     const name = await ask('Package Name:', folderName);
     const version = await ask('Version:', '1.0.0');
     const description = await ask('Description:', '');
+    const repository = await ask('Git Repository:');
+    const keywords = (await ask('Keywords:')).split(' ');
+    const author = await ask('Author:');
+    const funding = await ask('Funding Link:');
 
     let type: string | null = null;
 
@@ -107,12 +112,6 @@ async function init (): Promise<void> {
         main = await ask('Entry Point:', './dist/index.js');
     }
 
-    const repository = await ask('Git Repository:');
-
-    const keywords = (await ask('Keywords:')).split(' ');
-
-    const author = await ask('Author:');
-
     let license: string;
     let valid: any = {};
 
@@ -124,8 +123,6 @@ async function init (): Promise<void> {
 
         valid = validateLicense(license);
     } while (valid.warnings !== undefined);
-
-    const funding = await ask('Funding Link:');
     // #endregion
 
     // #region Filling Package.json:
@@ -154,12 +151,17 @@ async function init (): Promise<void> {
     packageJson.funding = funding;
     if (funding === '')
         delete packageJson.funding;
+
+    delete packageJson.dependencies;
     // #endregion
 
     // #region Saving Package.json:
     const newPackageJsonFile = `${mainFolder}/package.json`;
 
     await confirmAndWriteBellowContent(newPackageJsonFile, JSON.stringify(packageJson, null, 4));
+
+    if (await confirm('Add ts-cornucopia to dependencies?'))
+        execSync('npm i --save ts-cornucopia');
     // #endregion
 
     // #region Saving GitIgnore:
