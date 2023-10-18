@@ -1,16 +1,24 @@
-import { writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 
+import { fileURLToPath } from 'node:url';
 import { createInterface } from 'node:readline/promises';
 import { stdin as input, stdout as output } from 'node:process';
 import path from 'path';
 
 import packageFile from '../package.json';
 
-const validateLicense = require('validate-npm-package-license');
-
 const packageJson: any = packageFile;
 
+const validateLicense = require('validate-npm-package-license');
+
+const filename = fileURLToPath(import.meta.url);
+const dirname = path.dirname(filename);
+
+console.log(dirname);
+
 const readInterface = createInterface({ input, output });
+
+const readTemplate = (file: string): string => readFileSync(`${dirname}/templates/${file}`).toString();
 
 async function ask (text: string, defaultValue = ''): Promise<string> {
     if (defaultValue !== '')
@@ -30,6 +38,15 @@ async function confirm (text = 'Is this ok?'): Promise<boolean> {
     const confirmation = await ask(text, 'y');
 
     return confirmation.toLowerCase() === 'y';
+}
+
+async function confirmAndWriteBellowContent (fileName: string, content: string): Promise<void> {
+    console.log(`\nAbout to write the content bellow to ${fileName}.\n`);
+
+    console.log(content);
+
+    if (await confirm())
+        writeFileSync(fileName, content);
 }
 
 const folderName = path.basename(process.cwd());
@@ -137,30 +154,30 @@ async function init (): Promise<void> {
     // #endregion
 
     // #region Saving Package.json:
-    console.log(packageJson);
-
     const newPackageJsonFile = `${process.cwd()}/package.json`;
 
-    console.log(`\nAbout to write the content above to ${newPackageJsonFile}.\n`);
-
-    if (await confirm())
-        writeFileSync(newPackageJsonFile, JSON.stringify(packageJson, null, 4));
+    await confirmAndWriteBellowContent(newPackageJsonFile, JSON.stringify(packageJson, null, 4));
     // #endregion
 
     // #region Saving GitIgnore:
     const newGitIgnoreFile = `${process.cwd()}/.gitignore`;
 
-    console.log(`\nAbout to write the content bellow to ${newGitIgnoreFile}.\n`);
+    await confirmAndWriteBellowContent(newGitIgnoreFile, readTemplate('.gitignore'));
+    // #endregion
 
-    const gitIgnoreData = `dist
-node_modules
-.vscode
-`;
+    // #region Saving Github Workers:
+    if (await confirm('Is the Repository on Github?')) {
+        const githubFolder = `${process.cwd()}/.github`;
 
-    console.log(gitIgnoreData);
+        if (funding !== '') {
+            const fundingFile = `${githubFolder}/funding.yml`;
 
-    if (await confirm())
-        writeFileSync(newGitIgnoreFile, gitIgnoreData);
+            if (!existsSync(githubFolder))
+                mkdirSync(githubFolder);
+
+            await confirmAndWriteBellowContent(fundingFile, `custom: ${funding}`);
+        }
+    }
     // #endregion
 }
 
