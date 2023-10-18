@@ -92,13 +92,6 @@
             ]
         }
     },
-    "prettier": {
-        "tabWidth": 4,
-        "semi": false,
-        "singleQuote": true,
-        "trailingComma": "none",
-        "endOfLine": "auto"
-    },
     "jest": {
         "preset": "ts-jest",
         "testEnvironment": "node",
