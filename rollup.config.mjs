@@ -1,34 +1,32 @@
-import { existsSync, mkdirSync, writeFileSync } from 'fs'
+import { existsSync, mkdirSync, writeFileSync } from "fs";
 
-import nodeResolve from '@rollup/plugin-node-resolve'
-import peerDepsExternal from 'rollup-plugin-peer-deps-external';
-import typescript from 'rollup-plugin-typescript2'
-import json from "rollup-plugin-json"
+import nodeResolve from "@rollup/plugin-node-resolve";
+import peerDepsExternal from "rollup-plugin-peer-deps-external";
+import typescript from "rollup-plugin-typescript2";
+import json from "rollup-plugin-json";
 
-if (!existsSync('./.temp/dummy.js')) {
-    mkdirSync('./.temp/')
+if (!existsSync("./.temp/dummy.js")) {
+    mkdirSync("./.temp/");
 
     writeFileSync(
-        './.temp/dummy.js',
-        'export const dummy = () => console.log(42);'
-    )
+        "./.temp/dummy.js",
+        "export const dummy = () => console.log(42);"
+    );
 }
 
-export default [
-    {
-        input: 'index.ts',
-        output: [{
-            exports: 'named',
-            preserveModules: true,
-            interop: 'auto',
-            dir: 'dist/',
-            format: 'cjs'
-        }],
-        plugins: [
-            typescript({ tsconfig: 'tsconfig.json' }),
-            nodeResolve(),
-            peerDepsExternal(),
-            json(),
-        ]
-    }
-]
+export default [{
+    input: "src/index.ts",
+    output: [
+        {
+            exports: "named",
+            dir: "dist/",
+            format: "cjs"
+        },
+    ],
+    plugins: [
+        typescript({ tsconfig: "tsconfig.json" }),
+        nodeResolve(),
+        peerDepsExternal(),
+        json(),
+    ],
+}];
