@@ -130,15 +130,35 @@ async function init (): Promise<void> {
         delete packageJson.funding;
     // #endregion
 
+    // #region Saving Package.json:
     console.log(packageJson);
 
     const newPackageJsonFile = `${process.cwd()}/package.json`;
 
-    console.log(`About to write the above content to ${newPackageJsonFile}.`);
-    const confirmation = await ask('Is this ok?', 'y');
+    console.log(`\nAbout to write the content above to ${newPackageJsonFile}.\n`);
+    let confirmation = await ask('Is this ok?', 'y');
 
     if (confirmation.toLowerCase() === 'y')
         writeFileSync(newPackageJsonFile, JSON.stringify(packageJson, null, 4));
+    // #endregion
+
+    // #region Saving GitIgnore:
+    const newGitIgnoreFile = `${process.cwd()}/.gitignore`;
+
+    console.log(`\nAbout to write the content bellow to ${newGitIgnoreFile}.\n`);
+
+    const gitIgnoreData = `dist
+node_modules
+.vscode
+`;
+
+    console.log(gitIgnoreData);
+
+    confirmation = await ask('Is this ok?', 'y');
+
+    if (confirmation.toLowerCase() === 'y')
+        writeFileSync(newGitIgnoreFile, gitIgnoreData);
+    // #endregion
 }
 
 init()
