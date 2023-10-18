@@ -26,6 +26,12 @@ async function ask (text: string, defaultValue = ''): Promise<string> {
     return response;
 };
 
+async function confirm (text = 'Is this ok?'): Promise<boolean> {
+    const confirmation = await ask(text, 'y');
+
+    return confirmation.toLowerCase() === 'y';
+}
+
 const folderName = path.basename(process.cwd());
 
 async function init (): Promise<void> {
@@ -136,9 +142,8 @@ async function init (): Promise<void> {
     const newPackageJsonFile = `${process.cwd()}/package.json`;
 
     console.log(`\nAbout to write the content above to ${newPackageJsonFile}.\n`);
-    let confirmation = await ask('Is this ok?', 'y');
 
-    if (confirmation.toLowerCase() === 'y')
+    if (await confirm())
         writeFileSync(newPackageJsonFile, JSON.stringify(packageJson, null, 4));
     // #endregion
 
@@ -154,9 +159,7 @@ node_modules
 
     console.log(gitIgnoreData);
 
-    confirmation = await ask('Is this ok?', 'y');
-
-    if (confirmation.toLowerCase() === 'y')
+    if (await confirm())
         writeFileSync(newGitIgnoreFile, gitIgnoreData);
     // #endregion
 }
