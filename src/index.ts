@@ -169,14 +169,20 @@ async function init (): Promise<void> {
     if (await confirm('Is the Repository on Github?')) {
         const githubFolder = `${process.cwd()}/.github`;
 
+        if (!existsSync(githubFolder))
+            mkdirSync(githubFolder);
+
         if (funding !== '') {
             const fundingFile = `${githubFolder}/funding.yml`;
 
-            if (!existsSync(githubFolder))
-                mkdirSync(githubFolder);
-
             await confirmAndWriteBellowContent(fundingFile, `custom: ${funding}`);
         }
+
+        const workflowFolder = `${githubFolder}/workflows`;
+
+        await confirmAndWriteBellowContent(`${workflowFolder}/test.yml`, readTemplate('.github/workflows/test.yml'));
+
+        await confirmAndWriteBellowContent(`${workflowFolder}/deploy.yml`, readTemplate('.github/workflows/deploy.yml'));
     }
     // #endregion
 }
