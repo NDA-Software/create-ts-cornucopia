@@ -8,11 +8,24 @@ import path from 'path';
 
 import packageFile from '../package.json';
 import tsConfigFile from '../tsconfig.json';
+import eslintConfigFile from '../.eslintrc.json';
 
 const packageJson: any = packageFile;
 const tsCofigJson: any = tsConfigFile;
+const eslintJson: any = eslintConfigFile;
 
 const validateLicense = require('validate-npm-package-license');
+
+const eslintDevDependencies = [
+    '@typescript-eslint/eslint-plugin',
+    'eslint',
+    'eslint-config-prettier',
+    'eslint-config-standard-with-typescript',
+    'eslint-plugin-import',
+    'eslint-plugin-n',
+    'eslint-plugin-prettier',
+    'eslint-plugin-promise'
+];
 
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
@@ -123,6 +136,8 @@ async function init (): Promise<void> {
 
         valid = validateLicense(license);
     } while (valid.warnings !== undefined);
+
+    const withEslint = await confirm('Do you want eslint added and configured?');
     // #endregion
 
     // #region Filling Package.json:
@@ -153,6 +168,14 @@ async function init (): Promise<void> {
         delete packageJson.funding;
 
     delete packageJson.dependencies;
+
+    if (!withEslint) {
+        for (const dependency of eslintDevDependencies)
+            delete packageJson.devDependencies[dependency];
+
+        delete packageJson.scripts.lint;
+        delete packageJson.scripts['lint-fix'];
+    }
     // #endregion
 
     // #region Saving Package.json:
@@ -215,6 +238,10 @@ async function init (): Promise<void> {
 
         await confirmAndWriteBellowContent('LICENSE.md', licenseText);
     }
+    // #endregion
+
+    // #region Saving Eslint Config File:
+    await confirmAndWriteBellowContent(`${mainFolder}/.eslintrc.json`, JSON.stringify(eslintJson, null, 4));
     // #endregion
 }
 

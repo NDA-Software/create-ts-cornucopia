@@ -38,6 +38,7 @@
         "nonblock-statement-body-position": [
             "error",
             "below"
-        ]
+        ],
+        "@typescript-eslint/no-dynamic-delete": "off"
     }
 }
