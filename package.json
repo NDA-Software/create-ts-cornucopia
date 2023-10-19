@@ -49,49 +49,6 @@
         "ts-jest": "^29.1.1",
         "typescript": "^5.2.2"
     },
-    "eslintConfig": {
-        "extends": [
-            "standard-with-typescript"
-        ],
-        "overrides": [
-            {
-                "files": [
-                    "*.js",
-                    "*.jsx",
-                    "*.ts",
-                    "*.tsx",
-                    "*.d.ts",
-                    "*.mjs"
-                ]
-            }
-        ],
-        "parserOptions": {
-            "project": "./tsconfig.json"
-        },
-        "ignorePatterns": [
-            "rollup.config.mjs"
-        ],
-        "rules": {
-            "@typescript-eslint/semi": "off",
-            "semi": [
-                "error",
-                "always"
-            ],
-            "@typescript-eslint/indent": [
-                "error",
-                4
-            ],
-            "@typescript-eslint/space-before-function-paren": "off",
-            "@typescript-eslint/no-var-requires": "off",
-            "curly": "off",
-            "@typescript-eslint/member-delimiter-style": "off",
-            "prefer-template": "error",
-            "nonblock-statement-body-position": [
-                "error",
-                "below"
-            ]
-        }
-    },
     "jest": {
         "preset": "ts-jest",
         "testEnvironment": "node",
