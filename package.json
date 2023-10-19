@@ -49,17 +49,5 @@
         "ts-jest": "^29.1.1",
         "typescript": "^5.2.2"
     },
-    "jest": {
-        "preset": "ts-jest",
-        "testEnvironment": "node",
-        "transform": {
-            "^.+\\.(j|t)sx?$": "ts-jest"
-        },
-        "testPathIgnorePatterns": [
-            "/node_modules/",
-            "/src/",
-            "/dist/"
-        ]
-    },
     "funding": "https://www.buymeacoffee.com/herrturing"
 }
