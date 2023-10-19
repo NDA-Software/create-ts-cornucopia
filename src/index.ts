@@ -193,6 +193,29 @@ async function init (): Promise<void> {
 
     await confirmAndWriteBellowContent(`${mainFolder}/tsconfig.json`, JSON.stringify(tsCofigJson, null, 4));
     // #endregion
+
+    // #region Saving License File:
+    if (license === 'MIT' && author !== '') {
+        let licenseText = readTemplate('MIT_LICENSE.md');
+
+        const currentYear = (new Date()).getFullYear().toString();
+        licenseText = licenseText.replace('{{YEAR}}', currentYear);
+
+        let authorName = author;
+
+        const emailIndex = authorName.indexOf('<');
+        if (emailIndex !== -1)
+            authorName = authorName.substring(0, emailIndex);
+
+        const webPageIndex = authorName.indexOf('(');
+        if (webPageIndex !== -1)
+            authorName = authorName.substring(0, webPageIndex);
+
+        licenseText = licenseText.replace('{{AUTHOR}}', authorName);
+
+        await confirmAndWriteBellowContent('LICENSE.md', licenseText);
+    }
+    // #endregion
 }
 
 init()
