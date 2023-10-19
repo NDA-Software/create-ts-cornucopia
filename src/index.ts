@@ -9,10 +9,12 @@ import path from 'path';
 import packageFile from '../package.json';
 import tsConfigFile from '../tsconfig.json';
 import eslintConfigFile from '../.eslintrc.json';
+import jestConfigFile from '../jest.config.json';
 
 const packageJson: any = packageFile;
 const tsCofigJson: any = tsConfigFile;
 const eslintJson: any = eslintConfigFile;
+const jestJson: any = jestConfigFile;
 
 const validateLicense = require('validate-npm-package-license');
 
@@ -25,6 +27,12 @@ const eslintDevDependencies = [
     'eslint-plugin-n',
     'eslint-plugin-prettier',
     'eslint-plugin-promise'
+];
+
+const jestDevDependencies = [
+    '@types/jest',
+    'jest',
+    'ts-jest'
 ];
 
 const filename = fileURLToPath(import.meta.url);
@@ -137,7 +145,8 @@ async function init (): Promise<void> {
         valid = validateLicense(license);
     } while (valid.warnings !== undefined);
 
-    const withEslint = await confirm('Do you want eslint added and configured?');
+    const withEslint = await confirm('Do you want Eslint added and configured?');
+    const withJest = await confirm('Do you want Jest added and configured?');
     // #endregion
 
     // #region Filling Package.json:
@@ -175,6 +184,13 @@ async function init (): Promise<void> {
 
         delete packageJson.scripts.lint;
         delete packageJson.scripts['lint-fix'];
+    }
+
+    if (!withJest) {
+        for (const dependency of jestDevDependencies)
+            delete packageJson.devDependencies[dependency];
+
+        delete packageJson.scripts.test;
     }
     // #endregion
 
@@ -241,7 +257,13 @@ async function init (): Promise<void> {
     // #endregion
 
     // #region Saving Eslint Config File:
-    await confirmAndWriteBellowContent(`${mainFolder}/.eslintrc.json`, JSON.stringify(eslintJson, null, 4));
+    if (withEslint)
+        await confirmAndWriteBellowContent(`${mainFolder}/.eslintrc.json`, JSON.stringify(eslintJson, null, 4));
+    // #endregion
+
+    // #region Saving Jest Config File:
+    if (withJest)
+        await confirmAndWriteBellowContent(`${mainFolder}/jest.config.json`, JSON.stringify(jestJson, null, 4));
     // #endregion
 }
 
