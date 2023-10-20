@@ -88,6 +88,7 @@ async function init (): Promise<void> {
     const author = await ask('Author:');
     const funding = await ask('Funding Link:');
 
+    // #region Exports:
     let type: string | null = null;
 
     do {
@@ -98,40 +99,94 @@ async function init (): Promise<void> {
     } while (!['commonjs', 'module'].includes(type));
 
     let main = '';
-    const exports: any = {};
-    const typesVersions: any = {
-        '*': {}
-    };
+    let module = '';
+    const exports: any = { '.': {} };
+    const typesVersions: any = { '*': {} };
 
-    if (type === 'module') {
-        const withCommonJS = (await ask('With Common JS Entrypoin?', 'y')).toLocaleLowerCase() === 'y';
+    const isModule = type === 'module';
 
-        if (withCommonJS)
-            main = await ask('Common JS Entry Point:', './dist/cjs/index.js');
+    let cjsBasePath = './dist';
+    let esmBasePath = './dist';
+    const typeBasePath = 'dist/types';
 
-        const modulePath = `./dist/${withCommonJS ? 'esm/' : ''}`;
+    let withCommonJS = false;
+    if (isModule) {
+        withCommonJS = await confirm('With Common JS Entrypoints?');
 
-        let numberOfEntrypoints = parseInt(await ask('Number of Module Entry Points?', '1'), 10);
+        if (withCommonJS) {
+            cjsBasePath += '/cjs';
 
-        numberOfEntrypoints--;
+            esmBasePath += '/esm';
+        }
+    }
 
-        const mainEntryPoint = await ask('Main Entrypoint:', `${modulePath}index.js`);
+    let numberOfEntrypoints: number | null = null;
+    do {
+        if (numberOfEntrypoints != null)
+            console.log('Number of entrypoints must be a number and be higher than 0.');
 
-        for (let i = 0; i < numberOfEntrypoints; i++) {
-            const index = (i + 1);
+        numberOfEntrypoints = parseInt(await ask('Number of Module Entry Points?', '1'), 10);
+    } while (numberOfEntrypoints < 0 || isNaN(numberOfEntrypoints));
 
-            const entryPointPath = await ask(`Entrypoint-${index}'s Path:`, '');
-            const entryPoint = await ask(`Entrypoint-${index}:`, `${modulePath}${entryPointPath}/index.js`);
+    numberOfEntrypoints--;
 
-            exports[`./${entryPointPath}`] = entryPoint;
-            typesVersions['*'][entryPointPath] = [entryPoint.replace('.js', '.d.ts')];
+    const mainEntryPoint = await ask('Main Entry Point:', 'index.js');
+
+    exports['.'] = {};
+    typesVersions['*']['*'] = [mainEntryPoint.replace('.js', '.d.ts')];
+
+    if (withCommonJS || !isModule) {
+        main = `${cjsBasePath}/${mainEntryPoint}`;
+
+        exports['.'].require = main;
+    }
+
+    if (isModule) {
+        module = `${esmBasePath}/${mainEntryPoint}`;
+
+        exports['.'].import = module;
+    }
+
+    typesVersions['*']['*'] = [
+        `${typeBasePath}/${mainEntryPoint.replace('.js', '.d.ts')}`
+    ];
+
+    for (let i = 0; i < numberOfEntrypoints; i++) {
+        const index = (i + 1);
+
+        let entryPoint = await ask(`Entrypoint-${index}'s Original File:`, 'src/index.ts');
+        entryPoint = entryPoint.substring(4);
+
+        const entryPointArray = entryPoint.split('/');
+
+        let entryPointFile = entryPointArray[entryPointArray.length - 1] as string;
+        entryPointFile = entryPointFile.replace('.ts', '.js');
+
+        entryPointArray.pop();
+
+        let entryPointPath = entryPointArray.join('/');
+        if (entryPointFile !== 'index.js') {
+            if (entryPointPath !== '')
+                entryPointPath += '/';
+
+            entryPointPath += `${entryPointFile.replace('.js', '')}`;
+
+            entryPointFile = `${entryPointPath}.js`;
+        } else {
+            entryPointFile = `${entryPointPath}/${entryPointFile}`;
         }
 
-        exports['.'] = mainEntryPoint;
-        typesVersions['*']['*'] = [mainEntryPoint.replace('.js', '.d.ts')];
-    } else {
-        main = await ask('Entry Point:', './dist/index.js');
+        exports[`./${entryPointPath}`] = {};
+
+        if (withCommonJS || !isModule)
+            exports[`./${entryPointPath}`].require = `${cjsBasePath}/${entryPointFile}`;
+
+        if (isModule)
+            exports[`./${entryPointPath}`].import = `${esmBasePath}/${entryPointFile}`;
+
+        typesVersions['*'][entryPointPath] = [`${typeBasePath}/${entryPointFile.replace('.js', '.d.ts')}`];
     }
+    // #endregion
 
     let license: string;
     let valid: any = {};
@@ -160,12 +215,12 @@ async function init (): Promise<void> {
     if (main === '')
         delete packageJson.main;
 
+    packageJson.module = module;
+    if (module === '')
+        delete packageJson.module;
+
     packageJson.exports = exports;
     packageJson.typesVersions = typesVersions;
-    if (exports['.'] === undefined) {
-        delete packageJson.exports;
-        delete packageJson.typesVersions;
-    }
 
     packageJson.repository = repository;
     packageJson.keywords = keywords;
