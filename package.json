@@ -1,6 +1,7 @@
 {
     "name": "create-ts-cornucopia",
     "main": "./dist/index.js",
+    "module": "",
     "type": "commonjs",
     "version": "1.0.0",
     "description": "This package's objective is to make a quick way to create new projects in a similar structure to ts-cornucopia.",
@@ -23,6 +24,12 @@
     "files": [
         "dist"
     ],
+    "exports": {
+        ".": {
+            "require": "./dist/index.js"
+        }
+    },
+    "typesVersions": {},
     "dependencies": {
         "validate-npm-package-license": "^3.0.4"
     },
@@ -49,10 +56,5 @@
         "ts-jest": "^29.1.1",
         "typescript": "^5.2.2"
     },
-    "funding": "https://www.buymeacoffee.com/herrturing",
-    "exports": {
-        ".": {
-            "require": "./dist/index.js"
-        }
-    }
+    "funding": "https://www.buymeacoffee.com/herrturing"
 }
