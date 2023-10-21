@@ -272,7 +272,7 @@ async function init (): Promise<void> {
             mkdirSync(githubFolder);
 
         if (funding !== '')
-            await confirmAndWriteBellowContent(`${githubFolder}/funding.yml`, `custom: ${funding}`);
+            await confirmAndWriteBellowContent(`${githubFolder}/funding.yml`, `custom: ${funding}\n`);
 
         const workflowFolder = `${githubFolder}/workflows`;
 
