@@ -29,11 +29,11 @@
             "require": "./dist/index.js"
         }
     },
-    "typesVersions": {},
     "dependencies": {
         "validate-npm-package-license": "^3.0.4"
     },
     "devDependencies": {
+        "@rollup/plugin-json": "^6.0.1",
         "@rollup/plugin-node-resolve": "^15.1.0",
         "@rollup/plugin-typescript": "^11.1.5",
         "@types/jest": "^29.5.4",
