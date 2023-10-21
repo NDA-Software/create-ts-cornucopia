@@ -6,43 +6,25 @@ import { execSync } from 'node:child_process';
 
 import path from 'path';
 
-import packageFile from '../package.json';
-import tsConfigFile from '../tsconfig.json';
-import eslintConfigFile from '../.eslintrc.json';
-import jestConfigFile from '../jest.config.json';
-
-const packageJson: any = packageFile;
-const tsCofigJson: any = tsConfigFile;
-const eslintJson: any = eslintConfigFile;
-const jestJson: any = jestConfigFile;
-
 const validateLicense = require('validate-npm-package-license');
-
-const eslintDevDependencies = [
-    '@typescript-eslint/eslint-plugin',
-    'eslint',
-    'eslint-config-prettier',
-    'eslint-config-standard-with-typescript',
-    'eslint-plugin-import',
-    'eslint-plugin-n',
-    'eslint-plugin-prettier',
-    'eslint-plugin-promise'
-];
-
-const jestDevDependencies = [
-    '@types/jest',
-    'jest',
-    'ts-jest'
-];
 
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
 
-console.log(dirname);
-
 const readInterface = createInterface({ input, output });
 
-const readTemplate = (file: string): string => readFileSync(`${dirname}/templates/${file}`).toString();
+const mainFolder = process.cwd();
+const folderName = path.basename(mainFolder);
+
+// #region Helper Functions:
+const readTemplate = (file: string, isJson = false): string | any => {
+    const data = readFileSync(`${dirname}/templates/${file}`).toString();
+
+    if (!isJson)
+        return data;
+
+    return JSON.parse(data);
+};
 
 async function ask (text: string, defaultValue = ''): Promise<string> {
     if (defaultValue !== '')
@@ -72,9 +54,54 @@ async function confirmAndWriteBellowContent (fileName: string, content: string):
     if (await confirm())
         writeFileSync(fileName, content);
 }
+// #endregion
 
-const mainFolder = process.cwd();
-const folderName = path.basename(mainFolder);
+// #region Default Informations:
+// #region Files Added During Build:
+const eslintJson = readTemplate('.eslintrc.json', true);
+const jestJson = readTemplate('jest.config.json', true);
+const packageJson = readTemplate('package.json', true);
+const tsCofigJson = readTemplate('tsconfig.json', true);
+
+const gitIgnoreFile: string = readTemplate('.gitignore');
+
+const testWorkflowFile: string = readTemplate('.github/workflows/test.yml');
+const deployWorkflowFile: string = readTemplate('.github/workflows/deploy.yml');
+
+let rollupFile: string = readTemplate('rollup.config.mjs');
+// #endregion
+
+const licenseFile = readTemplate('MIT_LICENSE.md');
+
+const eslintDevDependencies = [
+    '@typescript-eslint/eslint-plugin',
+    'eslint',
+    'eslint-config-prettier',
+    'eslint-config-standard-with-typescript',
+    'eslint-plugin-import',
+    'eslint-plugin-n',
+    'eslint-plugin-prettier',
+    'eslint-plugin-promise'
+];
+
+const jestDevDependencies = [
+    '@types/jest',
+    'jest',
+    'ts-jest'
+];
+
+const rollupCustomizationRegion = `// #region Customizations:
+const configCjs = {
+    output: [{}],
+    plugins: []
+};
+
+const configEsm = {
+    output: [{}],
+    plugins: []
+};
+// #endregion`;
+// #endregion
 
 async function init (): Promise<void> {
     console.log('Preparing package.json...');
@@ -261,7 +288,7 @@ async function init (): Promise<void> {
     // #region Saving GitIgnore:
     const newGitIgnoreFile = `${mainFolder}/.gitignore`;
 
-    await confirmAndWriteBellowContent(newGitIgnoreFile, readTemplate('.gitignore'));
+    await confirmAndWriteBellowContent(newGitIgnoreFile, gitIgnoreFile);
     // #endregion
 
     // #region Saving Github Workers:
@@ -276,9 +303,9 @@ async function init (): Promise<void> {
 
         const workflowFolder = `${githubFolder}/workflows`;
 
-        await confirmAndWriteBellowContent(`${workflowFolder}/test.yml`, readTemplate('.github/workflows/test.yml'));
+        await confirmAndWriteBellowContent(`${workflowFolder}/test.yml`, testWorkflowFile);
 
-        await confirmAndWriteBellowContent(`${workflowFolder}/deploy.yml`, readTemplate('.github/workflows/deploy.yml'));
+        await confirmAndWriteBellowContent(`${workflowFolder}/deploy.yml`, deployWorkflowFile);
     }
     // #endregion
 
@@ -290,7 +317,7 @@ async function init (): Promise<void> {
 
     // #region Saving License File:
     if (license === 'MIT' && author !== '') {
-        let licenseText = readTemplate('MIT_LICENSE.md');
+        let licenseText = licenseFile;
 
         const currentYear = (new Date()).getFullYear().toString();
         licenseText = licenseText.replace('{{YEAR}}', currentYear);
@@ -319,6 +346,15 @@ async function init (): Promise<void> {
     // #region Saving Jest Config File:
     if (withJest)
         await confirmAndWriteBellowContent(`${mainFolder}/jest.config.json`, JSON.stringify(jestJson, null, 4));
+    // #endregion
+
+    // #region Saving Rollup Configuration:
+    const replaceStartIndex = rollupFile.indexOf('// #region Customizations:');
+    const replaceEndIndex = rollupFile.indexOf('// #endregion', replaceStartIndex) + 13;
+
+    rollupFile = rollupFile.substring(0, replaceStartIndex) + rollupCustomizationRegion + rollupFile.substring(replaceEndIndex);
+
+    await confirmAndWriteBellowContent(`${mainFolder}/rollup.config.mjs`, rollupFile);
     // #endregion
 }
 

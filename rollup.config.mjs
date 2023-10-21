@@ -44,7 +44,7 @@ const applyCustomization = (defaultConfig, customConfig) => {
     };
 }
 
-//#region Mock Data:
+// #region Mock Data:
 const tempFolder = ".temp"
 if (!existsSync(tempFolder))
     mkdirSync(tempFolder);
@@ -57,9 +57,9 @@ const mockConfig = {
     input: ".temp/mock.js",
     output: [{ dir: ".temp/", }],
 };
-//#endregion
+// #endregion
 
-//#region Base Configs:
+// #region Base Configs:
 const { exports } = packageJson;
 
 const config = [];
@@ -79,17 +79,27 @@ const hasTypes = !!tsConfig.compilerOptions.declaration;
 
 let declaration = hasTypes;
 let declarationDir = declaration ? "./dist/types/" : undefined;
-//#endregion
+// #endregion
 
-//#region Customizations:
+// #region Customizations:
 const configCjs = {
     output: [{}],
     plugins: [
         copy({
-            output: [{}],
             targets: [{
-                src: 'src/templates/',
-                dest: "dist/"
+                src: [
+                    '.eslintrc.json',
+                    '.gitignore',
+                    'jest.config.json',
+                    'package.json',
+                    'rollup.config.mjs',
+                    'tsconfig.json',
+                    'src/templates/MIT_LICENSE.md',
+                ],
+                dest: 'dist/templates/'
+            }, {
+                src: '.github/workflows',
+                dest: 'dist/templates/.github/'
             }],
             recursive: true
         })
@@ -98,19 +108,11 @@ const configCjs = {
 
 const configEsm = {
     output: [{}],
-    plugins: [
-        copy({
-            targets: [{
-                src: 'src/templates/',
-                dest: `dist/${hasCjs ? 'esm/' : ''}`
-            }],
-            recursive: true
-        })
-    ]
+    plugins: []
 };
-//#endregion
+// #endregion
 
-//#region Preparing Export Data:
+// #region Preparing Export Data:
 if (hasCjs) {
     const finalConfigCjs = applyCustomization({
         output: [{
@@ -169,9 +171,9 @@ if (hasEsm) {
 
     config.push(finalConfigEsm);
 }
-//#endregion
+// #endregion
 
-//#region Organizing Types:
+// #region Organizing Types:
 if (hasTypes) {
     config.push({
         ...mockConfig,
@@ -194,6 +196,6 @@ if (hasTypes) {
         ],
     });
 }
-//#endregion
+// #endregion
 
 export default config;
