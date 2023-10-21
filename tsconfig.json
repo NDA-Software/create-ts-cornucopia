@@ -21,7 +21,7 @@
         "noImplicitReturns": true,
         "noUncheckedIndexedAccess": true,
         "noImplicitOverride": true,
-        "noEmitOnError": true,
+        "noEmitOnError": true
     },
     "include": [
         "./src/**/*.ts",

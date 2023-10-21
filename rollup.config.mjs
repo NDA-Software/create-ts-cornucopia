@@ -79,6 +79,7 @@ const hasTypes = !!tsConfig.compilerOptions.declaration;
 
 let declaration = hasTypes;
 let declarationDir = declaration ? "./dist/types/" : undefined;
+const preserveModules = (Object.keys(exports)).length > 1;
 // #endregion
 
 // #region Customizations:
@@ -119,6 +120,8 @@ if (hasCjs) {
             exports: "named",
             dir: "dist/",
             format: "cjs",
+            preserveModules,
+            entryFileNames: "[name].cjs"
         }],
         plugins: [
             typescript({ tsconfig: "tsconfig.json", declaration, declarationDir }),
@@ -162,7 +165,9 @@ if (hasEsm) {
         output: [{
             exports: "named",
             dir: folder,
-            format: "esm"
+            format: "esm",
+            preserveModules,
+            entryFileNames: "[name].mjs"
         }],
         plugins: [
             typescript({ tsconfig: "tsconfig.json", declaration, declarationDir })
