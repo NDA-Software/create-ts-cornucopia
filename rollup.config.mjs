@@ -141,7 +141,7 @@ if (hasEsm) {
             plugins: [
                 copy({
                     targets: [
-                        { src: ['dist/*', '!dist/cjs', '!dist/types'], dest: "dist/cjs/" }
+                        { src: ['dist/*', '!dist/cjs', '!dist/types', '!dist/esm'], dest: "dist/cjs/" }
                     ]
                 })
             ],
@@ -167,7 +167,7 @@ if (hasEsm) {
         plugins: [
             typescript({ tsconfig: "tsconfig.json", declaration, declarationDir })
         ],
-    });
+    }, configEsm);
 
     config.push(finalConfigEsm);
 }
