@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, writeFileSync } from "fs";
+import { existsSync, mkdirSync, writeFileSync, readFileSync } from "fs";
 
 import nodeResolve from "@rollup/plugin-node-resolve";
 import typescript from "@rollup/plugin-typescript";
@@ -8,8 +8,43 @@ import json from "rollup-plugin-json";
 import copy from "rollup-plugin-copy";
 import del from "rollup-plugin-delete";
 
-import packageJson from "./package.json" assert { type: "json" };
+const packageJson = JSON.parse(readFileSync("./package.json"));
+const tsConfig = JSON.parse(readFileSync("./tsconfig.json"));
 
+const applyCustomization = (defaultConfig, customConfig) => {
+    let output = defaultConfig.output;
+
+    if (customConfig.output && customConfig.output[0]) {
+        output[0] = {
+            ...output[0],
+            ...customConfig.output[0]
+        };
+
+        if (customConfig.output[1]) {
+            customConfig.output.shift();
+
+            output = [
+                ...output,
+                ...customConfig.output
+            ];
+        }
+    }
+
+    const plugins = [
+        ...sharedConfigs.plugins,
+        ...customConfig.plugins,
+        ...defaultConfig.plugins
+    ];
+
+    return {
+        ...sharedConfigs,
+        ...customConfig,
+        output,
+        plugins,
+    };
+}
+
+//#region Mock Data:
 const tempFolder = ".temp"
 if (!existsSync(tempFolder))
     mkdirSync(tempFolder);
@@ -22,10 +57,13 @@ const mockConfig = {
     input: ".temp/mock.js",
     output: [{ dir: ".temp/", }],
 };
+//#endregion
 
-const { main, exports, typesVersions } = packageJson;
+//#region Base Configs:
+const { exports } = packageJson;
 
 const config = [];
+
 const sharedConfigs = {
     input: "src/index.ts",
     plugins: [
@@ -35,33 +73,63 @@ const sharedConfigs = {
     ],
 };
 
-if (main)
-    config.push({
-        ...sharedConfigs,
+const hasCjs = exports["."].require;
+const hasEsm = exports["."].import;
+const hasTypes = !!tsConfig.compilerOptions.declaration;
+
+let declaration = hasTypes;
+let declarationDir = declaration ? "./dist/types/" : undefined;
+//#endregion
+
+//#region Customizations:
+const configCjs = {
+    output: [{}],
+    plugins: [
+        copy({
+            output: [{}],
+            targets: [{
+                src: 'src/templates/',
+                dest: "dist/"
+            }],
+            recursive: true
+        })
+    ]
+};
+
+const configEsm = {
+    output: [{}],
+    plugins: [
+        copy({
+            targets: [{
+                src: 'src/templates/',
+                dest: `dist/${hasCjs ? 'esm/' : ''}`
+            }],
+            recursive: true
+        })
+    ]
+};
+//#endregion
+
+//#region Preparing Export Data:
+if (hasCjs) {
+    const finalConfigCjs = applyCustomization({
         output: [{
             exports: "named",
             dir: "dist/",
-            format: "cjs"
+            format: "cjs",
         }],
         plugins: [
-            ...sharedConfigs.plugins,
-            typescript({ tsconfig: "tsconfig.json", declaration: true, declarationDir: "./dist/types/" }),
-            copy({
-                targets: [{
-                    src: 'src/templates/',
-                    dest: "dist/"
-                }],
-                recursive: true
-            })
+            typescript({ tsconfig: "tsconfig.json", declaration, declarationDir }),
         ],
-    });
+    }, configCjs);
 
-if (exports) {
+    config.push(finalConfigCjs);
+}
+
+if (hasEsm) {
     let folder = "dist/"
-    let declaration = true;
-    let declarationDir = "./dist/types/";
 
-    if (main) {
+    if (hasCjs) {
         folder = "dist/esm/"
         declaration = false;
         declarationDir = undefined;
@@ -71,8 +139,7 @@ if (exports) {
             plugins: [
                 copy({
                     targets: [
-                        { src: ['dist/*', '!dist/cjs'], dest: "dist/cjs/" },
-                        { src: "dist/types/src/*", dest: "dist/types" }
+                        { src: ['dist/*', '!dist/cjs', '!dist/types'], dest: "dist/cjs/" }
                     ]
                 })
             ],
@@ -82,44 +149,51 @@ if (exports) {
             ...mockConfig,
             plugins: [
                 del({
-                    targets: ["dist/cjs/types", "dist/*", "!dist/cjs", "!dist/types"],
-                    recursive: true
-                }),
-                del({
-                    targets: ["dist/types/src"],
+                    targets: ["dist/*", "!dist/cjs", "!dist/types"],
                     recursive: true
                 })
             ],
         });
     }
 
-    config.push({
-        ...sharedConfigs,
+    const finalConfigEsm = applyCustomization({
         output: [{
             exports: "named",
             dir: folder,
             format: "esm"
         }],
         plugins: [
-            ...sharedConfigs.plugins,
-            typescript({ tsconfig: "tsconfig.json", declaration, declarationDir }),
+            typescript({ tsconfig: "tsconfig.json", declaration, declarationDir })
+        ],
+    });
+
+    config.push(finalConfigEsm);
+}
+//#endregion
+
+//#region Organizing Types:
+if (hasTypes) {
+    config.push({
+        ...mockConfig,
+        plugins: [
             copy({
-                targets: [{
-                    src: 'src/templates/',
-                    dest: folder
-                }],
+                targets: [
+                    { src: "dist/types/src/*", dest: "dist/types" }
+                ]
+            })
+        ],
+    });
+
+    config.push({
+        ...mockConfig,
+        plugins: [
+            del({
+                targets: ["dist/types/src"],
                 recursive: true
             })
         ],
     });
 }
-
-if (typesVersions && typesVersions["*"]) {
-    for (const key of Object.keys(typesVersions["*"])) {
-
-    }
-}
-
-console.log(config);
+//#endregion
 
 export default config;
