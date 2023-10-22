@@ -2,7 +2,6 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { createInterface } from 'node:readline/promises';
 import { stdin as input, stdout as output } from 'node:process';
-import { execSync } from 'node:child_process';
 
 import path from 'path';
 
@@ -66,7 +65,7 @@ async function confirmAndWriteBellowContent (fileName: string, content: string):
 // #region Default Informations:
 // #region Files Added During Build:
 const eslintJson = readTemplate('.eslintrc.json', true);
-const jestJson = readTemplate('jest.config.json', true);
+const jestJson = readTemplate('jest.config.mjs');
 const packageJson = readTemplate('package.json', true);
 const tsCofigJson = readTemplate('tsconfig.json', true);
 
@@ -284,9 +283,6 @@ async function init (): Promise<void> {
     const newPackageJsonFile = `${mainFolder}/package.json`;
 
     await confirmAndWriteBellowContent(newPackageJsonFile, JSON.stringify(packageJson, null, 4));
-
-    if (await confirm('Add ts-cornucopia to dependencies?'))
-        execSync('npm i --save ts-cornucopia');
     // #endregion
 
     // #region Saving GitIgnore:
@@ -352,7 +348,7 @@ async function init (): Promise<void> {
 
     // #region Saving Jest Config File:
     if (withJest)
-        await confirmAndWriteBellowContent(`${mainFolder}/jest.config.json`, JSON.stringify(jestJson, null, 4));
+        await confirmAndWriteBellowContent(`${mainFolder}/jest.config.mjs`, JSON.stringify(jestJson, null, 4));
     // #endregion
 
     // #region Saving Rollup Configuration:
