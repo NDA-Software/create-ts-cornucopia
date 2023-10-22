@@ -86,7 +86,9 @@ const preserveModules = (Object.keys(exports)).length > 1;
 
 // #region Customizations:
 const configCjs = {
-    output: [{}],
+    output: [{
+        banner: '#!/usr/bin/env node'
+    }],
     plugins: [
         copy({
             targets: [{

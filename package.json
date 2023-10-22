@@ -1,7 +1,6 @@
 {
     "name": "create-ts-cornucopia",
     "main": "./dist/index.cjs",
-    "module": "",
     "type": "commonjs",
     "version": "1.0.0",
     "description": "This package's objective is to make a quick way to create new projects in a similar structure to ts-cornucopia.",
@@ -24,6 +23,9 @@
     "files": [
         "dist"
     ],
+    "bin": {
+        "create-ts-cornucopia": "./dist/index.cjs"
+    },
     "exports": {
         ".": {
             "require": "./dist/index.cjs"

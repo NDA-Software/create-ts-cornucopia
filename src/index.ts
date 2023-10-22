@@ -278,6 +278,8 @@ async function init (): Promise<void> {
 
     packageJson.scripts.start = `node ${main}`;
 
+    delete packageJson.bin;
+
     if (!withEslint) {
         for (const dependency of eslintDevDependencies)
             delete packageJson.devDependencies[dependency];
