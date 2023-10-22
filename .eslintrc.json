@@ -10,16 +10,14 @@
                 "*.ts",
                 "*.tsx",
                 "*.d.ts",
-                "*.mjs"
+                "*.mjs",
+                "*.cjs"
             ]
         }
     ],
     "parserOptions": {
         "project": "./tsconfig.json"
     },
-    "ignorePatterns": [
-        "rollup.config.mjs"
-    ],
     "rules": {
         "@typescript-eslint/semi": "off",
         "semi": [

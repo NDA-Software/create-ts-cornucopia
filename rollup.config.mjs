@@ -1,26 +1,28 @@
-import { existsSync, mkdirSync, writeFileSync, readFileSync } from "fs";
+/* eslint-disable @typescript-eslint/explicit-function-return-type */
 
-import nodeResolve from "@rollup/plugin-node-resolve";
-import typescript from "@rollup/plugin-typescript";
-import json from "@rollup/plugin-json";
+import { existsSync, mkdirSync, writeFileSync, readFileSync } from 'fs';
 
-import peerDepsExternal from "rollup-plugin-peer-deps-external";
-import copy from "rollup-plugin-copy";
-import del from "rollup-plugin-delete";
+import nodeResolve from '@rollup/plugin-node-resolve';
+import typescript from '@rollup/plugin-typescript';
+import json from '@rollup/plugin-json';
 
-const packageJson = JSON.parse(readFileSync("./package.json"));
-const tsConfig = JSON.parse(readFileSync("./tsconfig.json"));
+import peerDepsExternal from 'rollup-plugin-peer-deps-external';
+import copy from 'rollup-plugin-copy';
+import del from 'rollup-plugin-delete';
+
+const packageJson = JSON.parse(readFileSync('./package.json'));
+const tsConfig = JSON.parse(readFileSync('./tsconfig.json'));
 
 const applyCustomization = (defaultConfig, customConfig) => {
     let output = defaultConfig.output;
 
-    if (customConfig.output && customConfig.output[0]) {
+    if (customConfig.output?.[0] !== undefined) {
         output[0] = {
             ...output[0],
             ...customConfig.output[0]
         };
 
-        if (customConfig.output[1]) {
+        if (customConfig.output[1] !== undefined) {
             customConfig.output.shift();
 
             output = [
@@ -40,22 +42,22 @@ const applyCustomization = (defaultConfig, customConfig) => {
         ...sharedConfigs,
         ...customConfig,
         output,
-        plugins,
+        plugins
     };
-}
+};
 
 // #region Mock Data:
-const tempFolder = ".temp"
+const tempFolder = '.temp';
 if (!existsSync(tempFolder))
     mkdirSync(tempFolder);
 
 const mockFile = `${tempFolder}/mock.js`;
 if (!existsSync(mockFile))
-    writeFileSync(mockFile, "export default () => 42;");
+    writeFileSync(mockFile, 'export default () => 42;');
 
 const mockConfig = {
-    input: ".temp/mock.js",
-    output: [{ dir: ".temp/", }],
+    input: '.temp/mock.js',
+    output: [{ dir: '.temp/' }]
 };
 // #endregion
 
@@ -65,20 +67,20 @@ const { exports } = packageJson;
 const config = [];
 
 const sharedConfigs = {
-    input: "src/index.ts",
+    input: 'src/index.ts',
     plugins: [
         nodeResolve(),
         peerDepsExternal(),
-        json(),
-    ],
+        json()
+    ]
 };
 
-const hasCjs = exports["."].require;
-const hasEsm = exports["."].import;
-const hasTypes = !!tsConfig.compilerOptions.declaration;
+const hasCjs = exports['.'].require !== undefined;
+const hasEsm = exports['.'].import !== undefined;
+const hasTypes = tsConfig.compilerOptions.declaration === true;
 
 let declaration = hasTypes;
-let declarationDir = declaration ? "./dist/types/" : undefined;
+let declarationDir = declaration ? './dist/types/' : undefined;
 const preserveModules = (Object.keys(exports)).length > 1;
 // #endregion
 
@@ -95,7 +97,7 @@ const configCjs = {
                     'package.json',
                     'rollup.config.mjs',
                     'tsconfig.json',
-                    'src/templates/MIT_LICENSE.md',
+                    'src/templates/MIT_LICENSE.md'
                 ],
                 dest: 'dist/templates/'
             }, {
@@ -117,25 +119,25 @@ const configEsm = {
 if (hasCjs) {
     const finalConfigCjs = applyCustomization({
         output: [{
-            exports: "named",
-            dir: "dist/",
-            format: "cjs",
+            exports: 'named',
+            dir: 'dist/',
+            format: 'cjs',
             preserveModules,
-            entryFileNames: "[name].cjs"
+            entryFileNames: '[name].cjs'
         }],
         plugins: [
-            typescript({ tsconfig: "tsconfig.json", declaration, declarationDir }),
-        ],
+            typescript({ tsconfig: 'tsconfig.json', declaration, declarationDir })
+        ]
     }, configCjs);
 
     config.push(finalConfigCjs);
 }
 
 if (hasEsm) {
-    let folder = "dist/"
+    let folder = 'dist/';
 
     if (hasCjs) {
-        folder = "dist/esm/"
+        folder = 'dist/esm/';
         declaration = false;
         declarationDir = undefined;
 
@@ -144,34 +146,34 @@ if (hasEsm) {
             plugins: [
                 copy({
                     targets: [
-                        { src: ['dist/*', '!dist/cjs', '!dist/types', '!dist/esm'], dest: "dist/cjs/" }
+                        { src: ['dist/*', '!dist/cjs', '!dist/types', '!dist/esm'], dest: 'dist/cjs/' }
                     ]
                 })
-            ],
+            ]
         });
 
         config.push({
             ...mockConfig,
             plugins: [
                 del({
-                    targets: ["dist/*", "!dist/cjs", "!dist/types"],
+                    targets: ['dist/*', '!dist/cjs', '!dist/types'],
                     recursive: true
                 })
-            ],
+            ]
         });
     }
 
     const finalConfigEsm = applyCustomization({
         output: [{
-            exports: "named",
+            exports: 'named',
             dir: folder,
-            format: "esm",
+            format: 'esm',
             preserveModules,
-            entryFileNames: "[name].mjs"
+            entryFileNames: '[name].mjs'
         }],
         plugins: [
-            typescript({ tsconfig: "tsconfig.json", declaration, declarationDir })
-        ],
+            typescript({ tsconfig: 'tsconfig.json', declaration, declarationDir })
+        ]
     }, configEsm);
 
     config.push(finalConfigEsm);
@@ -185,20 +187,20 @@ if (hasTypes) {
         plugins: [
             copy({
                 targets: [
-                    { src: "dist/types/src/*", dest: "dist/types" }
+                    { src: 'dist/types/src/*', dest: 'dist/types' }
                 ]
             })
-        ],
+        ]
     });
 
     config.push({
         ...mockConfig,
         plugins: [
             del({
-                targets: ["dist/types/src"],
+                targets: ['dist/types/src'],
                 recursive: true
             })
-        ],
+        ]
     });
 }
 // #endregion
