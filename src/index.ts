@@ -2,6 +2,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { createInterface } from 'node:readline/promises';
 import { stdin as input, stdout as output } from 'node:process';
+import { execSync } from 'node:child_process';
 
 import path from 'path';
 
@@ -107,6 +108,20 @@ const configEsm = {
     plugins: []
 };
 // #endregion`;
+
+const baseIndexFile = `export default function Hello (name: string = 'World'): void {
+    console.log(\`Hello \${name}!\`);
+}
+`;
+
+const baseTestFile = `import Hello from '../src';
+
+test('Testing index...', () => {
+    Hello();
+
+    console.log('Everything is Ok!');
+});
+`;
 // #endregion
 
 async function init (): Promise<void> {
@@ -348,7 +363,7 @@ async function init (): Promise<void> {
 
     // #region Saving Jest Config File:
     if (withJest)
-        await confirmAndWriteBellowContent(`${mainFolder}/jest.config.mjs`, JSON.stringify(jestJson, null, 4));
+        await confirmAndWriteBellowContent(`${mainFolder}/jest.config.mjs`, jestJson);
     // #endregion
 
     // #region Saving Rollup Configuration:
@@ -359,6 +374,35 @@ async function init (): Promise<void> {
 
     await confirmAndWriteBellowContent(`${mainFolder}/rollup.config.mjs`, rollupFile);
     // #endregion
+
+    // #region Creating Folders:
+    const srcFolder = './src';
+    if (!existsSync(srcFolder))
+        if (await confirm('About to create folder src. Is this ok?'))
+            mkdirSync(srcFolder);
+
+    if (existsSync(srcFolder)) {
+        const indexFile = `${srcFolder}/index.ts`;
+
+        if (!existsSync(indexFile))
+            await confirmAndWriteBellowContent(indexFile, baseIndexFile);
+    }
+
+    const testFolder = './tests';
+    if (!existsSync(testFolder))
+        if (await confirm('About to create folder tests. Is this ok?'))
+            mkdirSync(testFolder);
+
+    if (existsSync(testFolder)) {
+        const testFile = `${testFolder}/index.test.ts`;
+
+        if (!existsSync(testFile))
+            await confirmAndWriteBellowContent(testFile, baseTestFile);
+    }
+    // #endregion
+
+    if (await confirm('Execute npm install?'))
+        console.log(execSync('npm i').toString());
 }
 
 init()
