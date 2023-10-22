@@ -1,6 +1,6 @@
 {
     "name": "create-ts-cornucopia",
-    "main": "./dist/index.js",
+    "main": "./dist/index.cjs",
     "module": "",
     "type": "commonjs",
     "version": "1.0.0",
@@ -14,7 +14,7 @@
         "rollup"
     ],
     "scripts": {
-        "start": "node ./dist/index.js",
+        "start": "node ./dist/index.cjs",
         "build": "rollup -c",
         "watch": "rollup -c -w",
         "lint": "eslint src --ext .ts,.tsx",
@@ -26,7 +26,7 @@
     ],
     "exports": {
         ".": {
-            "require": "./dist/index.js"
+            "require": "./dist/index.cjs"
         }
     },
     "dependencies": {

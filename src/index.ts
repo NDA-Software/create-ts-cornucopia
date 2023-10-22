@@ -16,6 +16,10 @@ const readInterface = createInterface({ input, output });
 const mainFolder = process.cwd();
 const folderName = path.basename(mainFolder);
 
+let rootPackageJsonFile: any = {};
+if (existsSync('package.json'))
+    rootPackageJsonFile = JSON.parse(readFileSync('package.json').toString());
+
 // #region Helper Functions:
 const readTemplate = (file: string, isJson = false): string | any => {
     const data = readFileSync(`${dirname}/templates/${file}`).toString();
@@ -26,7 +30,10 @@ const readTemplate = (file: string, isJson = false): string | any => {
     return JSON.parse(data);
 };
 
-async function ask (text: string, defaultValue = ''): Promise<string> {
+async function ask (text: string, defaultValue = '', name = ''): Promise<string> {
+    if (rootPackageJsonFile[name] !== undefined)
+        defaultValue = rootPackageJsonFile[name];
+
     if (defaultValue !== '')
         text += ` (${defaultValue})`;
 
@@ -107,13 +114,13 @@ async function init (): Promise<void> {
     console.log('Preparing package.json...');
 
     // #region Questions:
-    const name = await ask('Package Name:', folderName);
-    const version = await ask('Version:', '1.0.0');
-    const description = await ask('Description:', '');
-    const repository = await ask('Git Repository:');
+    const name = await ask('Package Name:', folderName, 'name');
+    const version = await ask('Version:', '1.0.0', 'version');
+    const description = await ask('Description:', '', 'description');
+    const repository = await ask('Git Repository:', '', 'repository');
     const keywords = (await ask('Keywords:')).split(' ');
-    const author = await ask('Author:');
-    const funding = await ask('Funding Link:');
+    const author = await ask('Author:', '', 'author');
+    const funding = await ask('Funding Link:', '', 'funding');
 
     // #region Exports:
     let type: string | null = null;
@@ -122,19 +129,18 @@ async function init (): Promise<void> {
         if (type !== null)
             console.log('Type can only be "commonjs" or "module".');
 
-        type = await ask('Type:', 'module');
+        type = await ask('Type:', 'module', 'type');
     } while (!['commonjs', 'module'].includes(type));
 
     let main = '';
     let module = '';
     const exports: any = { '.': {} };
-    const typesVersions: any = { '*': {} };
 
     const isModule = type === 'module';
 
     let cjsBasePath = './dist';
     let esmBasePath = './dist';
-    const typeBasePath = 'dist/types';
+    const typeBasePath = './dist/types';
 
     let withCommonJS = false;
     if (isModule) {
@@ -160,23 +166,20 @@ async function init (): Promise<void> {
     const mainEntryPoint = await ask('Main Entry Point:', 'index.js');
 
     exports['.'] = {};
-    typesVersions['*']['*'] = [mainEntryPoint.replace('.js', '.d.ts')];
 
     if (withCommonJS || !isModule) {
-        main = `${cjsBasePath}/${mainEntryPoint}`;
+        main = `${cjsBasePath}/${mainEntryPoint.replace('js', 'cjs')}`;
 
         exports['.'].require = main;
     }
 
     if (isModule) {
-        module = `${esmBasePath}/${mainEntryPoint}`;
+        module = `${esmBasePath}/${mainEntryPoint.replace('js', 'mjs')}`;
 
         exports['.'].import = module;
     }
 
-    typesVersions['*']['*'] = [
-        `${typeBasePath}/${mainEntryPoint.replace('.js', '.d.ts')}`
-    ];
+    exports['.'].types = `${typeBasePath}/${mainEntryPoint.replace('.js', '.d.ts')}`;
 
     for (let i = 0; i < numberOfEntrypoints; i++) {
         const index = (i + 1);
@@ -206,12 +209,12 @@ async function init (): Promise<void> {
         exports[`./${entryPointPath}`] = {};
 
         if (withCommonJS || !isModule)
-            exports[`./${entryPointPath}`].require = `${cjsBasePath}/${entryPointFile}`;
+            exports[`./${entryPointPath}`].require = `${cjsBasePath}/${entryPointFile.replace('js', 'cjs')}`;
 
         if (isModule)
-            exports[`./${entryPointPath}`].import = `${esmBasePath}/${entryPointFile}`;
+            exports[`./${entryPointPath}`].import = `${esmBasePath}/${entryPointFile.replace('js', 'mjs')}`;
 
-        typesVersions['*'][entryPointPath] = [`${typeBasePath}/${entryPointFile.replace('.js', '.d.ts')}`];
+        exports[`./${entryPointPath}`].types = `${typeBasePath}/${entryPointFile.replace('.js', '.d.ts')}`;
     }
     // #endregion
 
@@ -222,7 +225,7 @@ async function init (): Promise<void> {
         for (const warning of valid?.warnings ?? [])
             console.warn(`Sorry, ${warning}.`);
 
-        license = await ask('License:', 'MIT');
+        license = await ask('License:', 'MIT', 'license');
 
         valid = validateLicense(license);
     } while (valid.warnings !== undefined);
@@ -247,7 +250,6 @@ async function init (): Promise<void> {
         delete packageJson.module;
 
     packageJson.exports = exports;
-    packageJson.typesVersions = typesVersions;
 
     packageJson.repository = repository;
     packageJson.keywords = keywords;
@@ -259,6 +261,8 @@ async function init (): Promise<void> {
         delete packageJson.funding;
 
     delete packageJson.dependencies;
+
+    packageJson.scripts.start = `node ${main}`;
 
     if (!withEslint) {
         for (const dependency of eslintDevDependencies)
@@ -302,6 +306,9 @@ async function init (): Promise<void> {
             await confirmAndWriteBellowContent(`${githubFolder}/funding.yml`, `custom: ${funding}\n`);
 
         const workflowFolder = `${githubFolder}/workflows`;
+
+        if (!existsSync(workflowFolder))
+            mkdirSync(workflowFolder);
 
         await confirmAndWriteBellowContent(`${workflowFolder}/test.yml`, testWorkflowFile);
 
