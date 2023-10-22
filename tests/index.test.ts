@@ -9,7 +9,6 @@ const filesExpected = [
     '.eslintrc.json',
     '.github',
     '.gitignore',
-    'jest.config.json',
     'jest.config.mjs',
     'package.json',
     'rollup.config.mjs',
