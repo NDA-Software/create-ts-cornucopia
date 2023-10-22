@@ -162,23 +162,23 @@ async function init (): Promise<void> {
 
     numberOfEntrypoints--;
 
-    const mainEntryPoint = await ask('Main Entry Point:', 'index.js');
+    const mainEntryPoint = (await ask('Main Entry Point Original File:', 'src/index.ts')).replace('src/', '');
 
     exports['.'] = {};
 
     if (withCommonJS || !isModule) {
-        main = `${cjsBasePath}/${mainEntryPoint.replace('js', 'cjs')}`;
+        main = `${cjsBasePath}/${mainEntryPoint.replace('ts', 'cjs')}`;
 
         exports['.'].require = main;
     }
 
     if (isModule) {
-        module = `${esmBasePath}/${mainEntryPoint.replace('js', 'mjs')}`;
+        module = `${esmBasePath}/${mainEntryPoint.replace('ts', 'mjs')}`;
 
         exports['.'].import = module;
     }
 
-    exports['.'].types = `${typeBasePath}/${mainEntryPoint.replace('.js', '.d.ts')}`;
+    exports['.'].types = `${typeBasePath}/${mainEntryPoint.replace('.ts', '.d.ts')}`;
 
     for (let i = 0; i < numberOfEntrypoints; i++) {
         const index = (i + 1);
