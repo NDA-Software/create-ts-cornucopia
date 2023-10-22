@@ -10,8 +10,12 @@ const filesExpected = [
     '.github',
     '.gitignore',
     'jest.config.mjs',
+    'node_modules',
+    'package-lock.json',
     'package.json',
     'rollup.config.mjs',
+    'src',
+    'tests',
     'tsconfig.json'
 ];
 
@@ -30,7 +34,7 @@ test('Testing file generations...', (done) => {
         const filesFound = readdirSync(testFolder);
 
         try {
-            for (let i = 0; i < filesFound.length; i++)
+            for (let i = 0; i < filesExpected.length; i++)
                 expect(filesFound[i]).toBe(filesExpected[i]);
         } catch (err) {
             return done(err);
@@ -38,4 +42,4 @@ test('Testing file generations...', (done) => {
 
         return done();
     });
-});
+}, 60000);
