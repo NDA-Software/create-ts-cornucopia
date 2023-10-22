@@ -70,8 +70,6 @@ const jestJson = readTemplate('jest.config.mjs');
 const packageJson = readTemplate('package.json', true);
 const tsCofigJson = readTemplate('tsconfig.json', true);
 
-const gitIgnoreFile: string = readTemplate('.gitignore');
-
 const testWorkflowFile: string = readTemplate('.github/workflows/test.yml');
 const deployWorkflowFile: string = readTemplate('.github/workflows/deploy.yml');
 
@@ -79,6 +77,11 @@ let rollupFile: string = readTemplate('rollup.config.mjs');
 // #endregion
 
 const licenseFile = readTemplate('MIT_LICENSE.md');
+
+const gitIgnoreText = `dist
+node_modules
+.vscode
+.temp`;
 
 const eslintDevDependencies = [
     '@typescript-eslint/eslint-plugin',
@@ -305,7 +308,7 @@ async function init (): Promise<void> {
     // #region Saving GitIgnore:
     const newGitIgnoreFile = `${mainFolder}/.gitignore`;
 
-    await confirmAndWriteBellowContent(newGitIgnoreFile, gitIgnoreFile);
+    await confirmAndWriteBellowContent(newGitIgnoreFile, gitIgnoreText);
     // #endregion
 
     // #region Saving Github Workers:

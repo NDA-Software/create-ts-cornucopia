@@ -2,7 +2,7 @@
     "name": "create-ts-cornucopia",
     "main": "./dist/index.cjs",
     "type": "commonjs",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "description": "This package's objective is to make a quick way to create new projects in a similar structure to ts-cornucopia.",
     "repository": "git@github.com/NDA-Software/create-ts-cornucopia.git",
     "author": "HerrTuring <admin@nda.software>",
