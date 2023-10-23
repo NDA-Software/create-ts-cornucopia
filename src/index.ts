@@ -152,6 +152,7 @@ async function init (): Promise<void> {
     let main = '';
     let module = '';
     const exports: any = { '.': {} };
+    const typesVersions: any = { '*': {} };
 
     const isModule = type === 'module';
 
@@ -196,7 +197,7 @@ async function init (): Promise<void> {
         exports['.'].import = module;
     }
 
-    exports['.'].types = `${typeBasePath}/${mainEntryPoint.replace('.ts', '.d.ts')}`;
+    typesVersions['*']['*'] = [`${typeBasePath}/${mainEntryPoint.replace('.ts', '.d.ts')}`];
 
     for (let i = 0; i < numberOfEntrypoints; i++) {
         const index = (i + 1);
@@ -231,7 +232,7 @@ async function init (): Promise<void> {
         if (isModule)
             exports[`./${entryPointPath}`].import = `${esmBasePath}/${entryPointFile.replace('js', 'mjs')}`;
 
-        exports[`./${entryPointPath}`].types = `${typeBasePath}/${entryPointFile.replace('.js', '.d.ts')}`;
+        typesVersions['*'][entryPointPath] = [`${typeBasePath}/${entryPointFile.replace('.js', '.d.ts')}`];
     }
     // #endregion
 
@@ -267,6 +268,7 @@ async function init (): Promise<void> {
         delete packageJson.module;
 
     packageJson.exports = exports;
+    packageJson.typesVersions = typesVersions;
 
     packageJson.repository = repository;
     packageJson.keywords = keywords;
@@ -277,7 +279,7 @@ async function init (): Promise<void> {
     if (funding === '')
         delete packageJson.funding;
 
-    delete packageJson.dependencies;
+    delete packageJson.dependencies['validate-npm-package-license'];
 
     packageJson.scripts.start = `node ${main}`;
 

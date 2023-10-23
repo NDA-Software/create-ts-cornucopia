@@ -199,7 +199,7 @@ if (hasTypes) {
         ...mockConfig,
         plugins: [
             del({
-                targets: ['dist/types/src'],
+                targets: ['dist/types/src', 'dist/types/tests'],
                 recursive: true
             })
         ]
