@@ -6,7 +6,6 @@ import nodeResolve from '@rollup/plugin-node-resolve';
 import typescript from '@rollup/plugin-typescript';
 import json from '@rollup/plugin-json';
 
-import peerDepsExternal from 'rollup-plugin-peer-deps-external';
 import copy from 'rollup-plugin-copy';
 import del from 'rollup-plugin-delete';
 
@@ -66,13 +65,18 @@ const { exports } = packageJson;
 
 const config = [];
 
+const external = [];
+
+for (const key in packageJson.peerDependencies)
+    external.push(key);
+
 const sharedConfigs = {
     input: 'src/index.ts',
     plugins: [
         nodeResolve(),
-        peerDepsExternal(),
         json()
-    ]
+    ],
+    external
 };
 
 const hasCjs = exports['.'].require !== undefined;
