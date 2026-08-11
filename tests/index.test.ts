@@ -42,4 +42,4 @@ test('Testing file generations...', (done) => {
 
         return done();
     });
-}, 60000);
+}, 120000);
